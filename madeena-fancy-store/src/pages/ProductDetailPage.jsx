@@ -1,6 +1,8 @@
-import React from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { FaWhatsapp, FaArrowLeft, FaPhone } from 'react-icons/fa'
+import React from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { FaWhatsapp, FaArrowLeft, FaPhone } from "react-icons/fa";
+import { useCart } from "../context/CartContext";
+import { useInventory } from "../context/InventoryContext";
 
 // Same items array - you can import this from a shared file
 const items = [
@@ -144,8 +146,13 @@ const items = [
 export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { addToCart } = useCart()
+  const { getStock, isLowStock, isOutOfStock } = useInventory()
   
   const product = items.find(item => item.id === parseInt(id))
+  const stock = getStock(parseInt(id))
+  const lowStock = isLowStock(parseInt(id))
+  const outOfStock = isOutOfStock(parseInt(id))
 
   if (!product) {
     return (
@@ -195,6 +202,26 @@ export default function ProductDetail() {
                 <p className="text-sm text-gray-600 mb-1">Price</p>
                 <p className="text-3xl font-bold text-green-600">{product.price}</p>
               </div>
+              
+              {/* Stock Status */}
+              <div className="mb-6">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Stock:</span>
+                  {outOfStock ? (
+                    <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-semibold">
+                      Out of Stock
+                    </span>
+                  ) : lowStock ? (
+                    <span className="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-sm font-semibold">
+                      Low Stock ({stock} left)
+                    </span>
+                  ) : (
+                    <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-semibold">
+                      In Stock ({stock} available)
+                    </span>
+                  )}
+                </div>
+              </div>
 
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-2">Product Details</h3>
@@ -210,18 +237,30 @@ export default function ProductDetail() {
 
             {/* Action Buttons */}
             <div className="space-y-3">
+              <button
+                onClick={() => !outOfStock && addToCart(product)}
+                disabled={outOfStock}
+                className={`flex items-center justify-center gap-2 px-6 py-3 rounded-lg shadow-md transition-all duration-200 w-full font-semibold ${
+                  outOfStock 
+                    ? 'bg-gray-400 cursor-not-allowed text-white' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                🛒 {outOfStock ? 'Out of Stock' : 'Add to Cart'}
+              </button>
+              
               <a
                 href={whatsappLink}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-md transition-all duration-200 w-full font-semibold"
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-6 py-3 rounded-lg shadow-md transition-all duration-200 w-full font-semibold"
               >
                 <FaWhatsapp className="text-xl" /> Order via WhatsApp
               </a>
               
               <a
                 href="tel:+919790561323"
-                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-md transition-all duration-200 w-full font-semibold"
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-3 rounded-lg shadow-md transition-all duration-200 w-full font-semibold"
               >
                 <FaPhone /> Call Now
               </a>
